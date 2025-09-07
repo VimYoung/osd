@@ -1,0 +1,8 @@
+[package]
+name = "osd"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+slint = "1.13.0"
+spell-framework = "0.1.5"
