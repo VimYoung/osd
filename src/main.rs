@@ -27,23 +27,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let state = Box::new(ui.get_state());
     let handle = waywin.get_handler();
     handle.subtract_input_region(0, 0, 80, 248);
-    //
-    // let comm = String::from("pamixer --get-volume");
-    // let mut out_vec = std::process::Command::new("sh")
-    //     .arg("-c")
-    //     .arg(comm)
-    //     .output()
-    //     .unwrap()
-    //     .stdout;
-    // out_vec.pop();
-    // let val = format!("{}{}", String::from_utf8(out_vec).unwrap(), ".0");
-    // let value = val.parse::<f32>().unwrap();
-    // ui.set_state(osdState {
-    //     is_open: false,
-    //     restart: false,
-    //     value,
-    // });
-
     ui.on_call_close({
         let h_clone = handle.clone();
         move || {
@@ -53,7 +36,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     ui.on_get_vol_value({
         let ui_handle = ui.as_weak().unwrap();
+        let h_clone = handle.clone();
         move || {
+            h_clone.add_input_region(0, 0, 80, 250);
             let comm = String::from("pamixer --get-volume");
             let mut out_vec = std::process::Command::new("sh")
                 .arg("-c")
@@ -64,11 +49,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             out_vec.pop();
             let val = format!("{}{}", String::from_utf8(out_vec).unwrap(), ".0");
             let changed_value = val.parse::<f32>().unwrap();
-            ui_handle.set_state(osdState {
-                is_open: ui_handle.get_state().is_open,
-                restart: ui_handle.get_state().restart,
-                value: changed_value,
-            });
+            ui_handle.set_value(changed_value);
             // changed_value
         }
     });
@@ -76,13 +57,22 @@ fn main() -> Result<(), Box<dyn Error>> {
     ui.on_vol_changed(|vol| {
         let val = (vol as u32).to_string();
         let comm = String::from("pamixer --set-volume ") + &val;
-        println!("{}", comm);
         let _ = std::process::Command::new("sh")
             .arg("-c")
             .arg(comm)
             .output()
             .unwrap();
     });
+
+    ui.on_toggle_mute(|| {
+        let comm = String::from("pamixer -t");
+        let _ = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(comm)
+            .output()
+            .unwrap();
+    });
+
     cast_spell(
         waywin,
         Some(Arc::new(RwLock::new(state))),
@@ -101,7 +91,8 @@ impl ForeignController for osdState {
     fn get_type(&self, key: &str) -> spell_framework::layer_properties::DataType {
         match key {
             "is-open" => DataType::Boolean(self.is_open),
-            "val" => DataType::Int(self.value as i32),
+            "is-restart" => DataType::Boolean(self.restart),
+            // "val" => DataType::Int(self.value as i32),
             _ => DataType::Panic,
         }
     }

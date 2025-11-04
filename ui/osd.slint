@@ -2,14 +2,16 @@ import { MySlider } from "slider.slint";
 export struct osdState {
     is-open:bool,
     restart: bool,
-    value: float,
 }
 
 export component VolumeOSD inherits Window {
-    in-out property <osdState> state: { is-open: false, restart: false, value: 0.0 };
+    in-out property <osdState> state: { is-open: false, restart: false };
+    in-out property <float> value;
+    in-out property <bool> is_muted;
     pure callback get_vol_value();
     pure callback vol_changed(float);
     pure callback call_close();
+    pure callback toggle_mute();
     background: transparent;
     width: 80px;
     height: 250px;
@@ -27,9 +29,8 @@ export component VolumeOSD inherits Window {
 
     Timer {
         running: root.state.is-open;
-        interval: 200ms;
+        interval: 100ms;
         triggered() => {
-            // state.value = root.get_vol_value();
             root.get_vol_value();
         }
     }
@@ -55,18 +56,38 @@ export component VolumeOSD inherits Window {
         MySlider {
             y: 5px;
             x: 5px;
-            value: root.state.value;
+            value: root.value;
             set-vol(val) => {
                 root.vol_changed(val);
             }
+            reset => {
+                if state.is_open {
+                    state.restart = true;
+                }
+            }
         }
 
-        Image {
+        Rectangle {
             y: 225px;
             width: 18px;
             height: 18px;
-            source: @image-url("../assets/volume-full-svgrepo-com.svg");
-            colorize: #B4B4B4;
+            Image {
+                width: parent.width;
+                height: parent.height;
+                source: is_muted ? @image-url("../assets/mute-volume.svg") : @image-url("../assets/volume-full.svg");
+                colorize: #B4B4B4;
+            }
+
+            handle := TouchArea {
+                clicked => {
+                    if is_muted {
+                        is_muted = false;
+                    } else {
+                        is_muted = true;
+                    }
+                    toggle_mute();
+                }
+            }
         }
     }
 }

@@ -1,0 +1,27 @@
+export component VolumeOSD inherits Window {
+    in-out property <float> value;
+    pure callback vol_changed(float);
+    Rectangle {
+        width: 35px;
+        height: 250px;
+        border-radius: root.width / 2;
+        border-width: 2px;
+        border-color: #B4B4B4;
+        background: #000000;
+        MySlider {
+            y: 5px;
+            x: 5px;
+            value: root.value;
+            set-vol(val) => {
+                root.vol_changed(val);
+            }
+        }
+
+        Image {
+            width: parent.width;
+            height: parent.height;
+            source: @image-url("../assets/volume-full.svg");
+            colorize: #B4B4B4;
+        }
+    }
+}

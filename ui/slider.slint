@@ -1,10 +1,9 @@
 
 export component MySlider inherits Rectangle {
-    in-out property <float> maximum: 100;
-    in-out property <float> minimum: 0;
     in-out property <float> value;
     callback set-vol(float);
-
+    callback reset();
+    in property <float> val_org: value < 100 ? 100 - value : 0;
     width: 25px;
     height: 215px;
     horizontal-stretch: 1;
@@ -20,15 +19,11 @@ export component MySlider inherits Rectangle {
     handle := Rectangle {
         y: 0px;
         width: parent.width;
-        height: (root.height) * ((root.maximum - root.value) - root.minimum) / (root.maximum - root.minimum);
+        height: root.height * (val_org / 100);
         border-top-left-radius: self.height / 2;
         border-top-right-radius: self.height / 2;
         background: touch.pressed ? #eee : #ddd;
-        animate background { duration: 200ms; }
-        animate height {
-            delay: 100ms;
-            duration: 200ms;
-        }
+        animate background, height { duration: 200ms; }
     }
 
     touch := TouchArea {
@@ -36,15 +31,9 @@ export component MySlider inherits Rectangle {
         pointer-event(event) => {
             if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
                 self.pressed-value = root.value;
-                root.value = root.maximum - (touch.pressed-y * (root.maximum - root.minimum) / (root.height - handle.width));
+                root.value = 100 * (1 - (touch.pressed-y / (root.height)));
                 set_vol(root.value);
-            }
-        }
-        moved => {
-            if (self.enabled && self.pressed) {
-                root.value = root.maximum - (max(root.minimum, min(root.maximum,
-                    self.pressed-value + (touch.mouse-y - touch.pressed-y) * (root.maximum - root.minimum) / (root.height - handle.width))));
-                set_vol(root.value);
+                reset();
             }
         }
     }
