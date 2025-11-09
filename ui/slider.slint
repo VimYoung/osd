@@ -27,10 +27,8 @@ export component MySlider inherits Rectangle {
     }
 
     touch := TouchArea {
-        property <float> pressed-value;
         pointer-event(event) => {
             if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
-                self.pressed-value = root.value;
                 root.value = 100 * (1 - (touch.pressed-y / (root.height)));
                 set_vol(root.value);
                 reset();
